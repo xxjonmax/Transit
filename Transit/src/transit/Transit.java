@@ -46,8 +46,50 @@ public class Transit {
 	 * @param locations Int array listing all the walking locations (always increments by 1)
 	 */
 	public void makeList(int[] trainStations, int[] busStops, int[] locations) {
+		
+		int walking_location;
+		int bus_location;
+		int train_location;
+		
+		TNode firstloc = new TNode(0);
+		TNode firstBus = new TNode(0,null,firstloc);
+		trainZero = new TNode(0,null,firstBus);
 
-	    // UPDATE THIS METHOD
+		TNode loc_node=null, bus_node=null, train_node=null;
+		TNode prev_loc_node = firstloc, prev_bus_node = firstBus, prev_train_node = trainZero;
+		
+		for (int location_idx = 0, bus_idx = 0, train_idx = 0; location_idx < locations.length; location_idx++){
+			walking_location = locations[location_idx];
+			bus_location = busStops[bus_idx];
+			train_location = trainStations[train_idx];
+
+			//Hook up location
+			loc_node = new TNode(walking_location);
+			if (prev_loc_node != null)
+				prev_loc_node.setNext(loc_node);
+			prev_loc_node = loc_node;
+			// Hook up bus
+			if ( walking_location == bus_location){
+
+				// Creates the bus node, sets loc_node as down
+				bus_node = new TNode(bus_location, null, loc_node);
+				if (prev_bus_node != null)
+					prev_bus_node.setNext(bus_node);
+				prev_bus_node = bus_node;
+				++bus_idx;
+
+
+				// Hook up train
+				if (bus_location == train_location){
+					train_node = new TNode(train_location, null, bus_node);
+					if (prev_train_node != null)
+						prev_train_node.setNext(train_node);
+					prev_train_node = train_node;
+					++train_idx;
+				}
+			}
+		}
+		System.out.println();
 	}
 	
 	/**
