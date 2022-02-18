@@ -45,6 +45,24 @@ public class Transit {
 	 * @param busStops Int array listing all the bus stops
 	 * @param locations Int array listing all the walking locations (always increments by 1)
 	 */
+	public TNode walkTo(TNode start, int end){
+		TNode currentLoc = start;
+		for(; currentLoc!=null&&currentLoc.getLocation()<end;currentLoc=currentLoc.getNext());
+		if (currentLoc.getLocation() == end){
+			return currentLoc;
+		}
+		return null;
+	}
+
+	public ArrayList<TNode> mapTo(TNode start, int end){
+		ArrayList<TNode> map = new ArrayList<>();
+		TNode currentLoc = start;
+		for(; currentLoc!=null&&currentLoc.getLocation()<=end;currentLoc=currentLoc.getNext()){
+			map.add(currentLoc);
+		}
+		return map;
+	}
+
 	public void makeList(int[] trainStations, int[] busStops, int[] locations) {
 		
 		int walking_location;
@@ -99,7 +117,15 @@ public class Transit {
 	 * @param station The location of the train station to remove
 	 */
 	public void removeTrainStation(int station) {
-	    // UPDATE THIS METHOD
+		TNode currentStop = trainZero.getNext();
+		TNode prev=trainZero;
+		while(currentStop!=null){
+			if (currentStop.getLocation()==station){
+				prev.setNext(currentStop.getNext());
+			}
+			prev = currentStop;
+			currentStop = currentStop.getNext();
+		}
 	}
 
 	/**
@@ -109,7 +135,20 @@ public class Transit {
 	 * @param busStop The location of the bus stop to add
 	 */
 	public void addBusStop(int busStop) {
-	    // UPDATE THIS METHOD
+	   TNode busZero = trainZero.getDown();
+	   TNode current = busZero;
+	   TNode dwn;
+	   
+	   while(current.getLocation()<busStop){
+		   if (current.getNext().getLocation()>busStop){
+			   //create new stop
+			   dwn = walkTo(current.getDown(), busStop);
+			   TNode newBus = new TNode(busStop, current.getNext(), dwn);
+			   current.setNext(newBus);
+		   }
+		   current=current.getNext();
+	   }
+
 	}
 	
 	/**
@@ -120,9 +159,14 @@ public class Transit {
 	 * @return
 	 */
 	public ArrayList<TNode> bestPath(int destination) {
-
-	    // UPDATE THIS METHOD
-	    return null;
+		ArrayList<TNode> path = new ArrayList<>();
+		ArrayList<TNode> trains=mapTo(trainZero, destination);
+		ArrayList<TNode> busses=mapTo(trains.get(trains.size()-1).getDown(), destination);
+		ArrayList<TNode> locs=mapTo(busses.get(busses.size()-1).getDown(), destination);
+		path.addAll(trains);
+		path.addAll(busses);
+		path.addAll(locs);
+	    return path;
 	}
 
 	/**
