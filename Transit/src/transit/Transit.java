@@ -94,8 +94,8 @@ public class Transit {
 	public void makeList(int[] trainStations, int[] busStops, int[] locations) {
 		
 		int walking_location;
-		int bus_location;
-		int train_location;
+		int bus_location = 0;
+		int train_location = 0;
 		
 		TNode firstloc = new TNode(0);
 		TNode firstBus = new TNode(0,null,firstloc);
@@ -106,8 +106,12 @@ public class Transit {
 		
 		for (int location_idx = 0, bus_idx = 0, train_idx = 0; location_idx  < locations.length; location_idx++){
 			walking_location = locations[location_idx];
+			if (bus_idx<busStops.length){
 			bus_location = busStops[bus_idx];
+			}
+			if (train_idx<trainStations.length){
 			train_location = trainStations[train_idx];
+			}
 
 			//Hook up location
 			loc_node = new TNode(walking_location);
