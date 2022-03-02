@@ -48,10 +48,38 @@ public class Transit {
 	public TNode walkTo(TNode start, int end){
 		TNode currentLoc = start;
 		for(; currentLoc!=null&&currentLoc.getLocation()<end;currentLoc=currentLoc.getNext());
-		if (currentLoc.getLocation() == end){
+		if (currentLoc!=null&&currentLoc.getLocation() == end){
 			return currentLoc;
 		}
 		return null;
+	}
+
+	public void addStop(TNode start, int loc) {
+		TNode current = start;
+		TNode dwn;
+		
+		while(current.getLocation()<loc){
+			if (current.getNext().getLocation()>loc){
+				//create new stop
+				dwn = walkTo(current.getDown(), loc);
+				TNode newStop = new TNode(loc, current.getNext(), dwn);
+				current.setNext(newStop);
+			}
+			current=current.getNext();
+		}
+ 
+	 }
+
+	public TNode copyNode(TNode target){
+		TNode copy = new TNode(target.getLocation(),target.getNext(),target.getDown());
+		if (target.getNext()!=null){
+			copy.setNext(copyNode(target.getNext()));
+			return target;
+		}
+		if (target.getDown()!=null){
+			copy.setDown(copyNode(target.getDown()));
+		}
+		return copy;
 	}
 
 	public ArrayList<TNode> mapTo(TNode start, int end){
@@ -76,7 +104,7 @@ public class Transit {
 		TNode loc_node=null, bus_node=null, train_node=null;
 		TNode prev_loc_node = firstloc, prev_bus_node = firstBus, prev_train_node = trainZero;
 		
-		for (int location_idx = 0, bus_idx = 0, train_idx = 0; location_idx < locations.length; location_idx++){
+		for (int location_idx = 0, bus_idx = 0, train_idx = 0; location_idx  < locations.length; location_idx++){
 			walking_location = locations[location_idx];
 			bus_location = busStops[bus_idx];
 			train_location = trainStations[train_idx];
@@ -136,19 +164,7 @@ public class Transit {
 	 */
 	public void addBusStop(int busStop) {
 	   TNode busZero = trainZero.getDown();
-	   TNode current = busZero;
-	   TNode dwn;
-	   
-	   while(current.getLocation()<busStop){
-		   if (current.getNext().getLocation()>busStop){
-			   //create new stop
-			   dwn = walkTo(current.getDown(), busStop);
-			   TNode newBus = new TNode(busStop, current.getNext(), dwn);
-			   current.setNext(newBus);
-		   }
-		   current=current.getNext();
-	   }
-
+	   addStop(busZero, busStop);
 	}
 	
 	/**
@@ -176,9 +192,8 @@ public class Transit {
 	 * @return A reference to the train zero node of a deep copy
 	 */
 	public TNode duplicate() {
-
-	    // UPDATE THIS METHOD
-	    return null;
+		TNode copyZero = copyNode(trainZero);
+	    return copyZero;
 	}
 
 	/**
@@ -188,8 +203,22 @@ public class Transit {
 	 * @param scooterStops An int array representing where the scooter stops are located
 	 */
 	public void addScooter(int[] scooterStops) {
-
-	    // UPDATE THIS METHOD
+		TNode busZero = trainZero.getDown();
+		TNode locZero = busZero.getDown();
+		TNode scooterZero = new TNode(0,null,locZero);
+		busZero.setDown(scooterZero);
+		TNode current = scooterZero;
+		TNode dwn;
+		for(int stop = 0; stop<scooterStops.length; stop++){
+			TNode currentBus = walkTo(busZero, scooterStops[stop]);
+			dwn = walkTo(locZero, scooterStops[stop]);
+			TNode newScoot = new TNode(scooterStops[stop], null, dwn);
+			if (currentBus!=null){
+			currentBus.setDown(newScoot);
+			}
+			current.setNext(newScoot);
+			current=current.getNext();
+		}
 	}
 
 	/**
