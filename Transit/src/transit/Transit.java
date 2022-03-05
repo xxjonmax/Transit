@@ -1,6 +1,9 @@
 package transit;
 
 import java.util.ArrayList;
+import java.util.Queue;
+
+import org.w3c.dom.Node;
 
 /**
  * This class contains methods which perform various operations on a layered linked
@@ -70,17 +73,21 @@ public class Transit {
  
 	 }
 
-	public TNode copyNode(TNode target){
-		TNode copy = new TNode(target.getLocation(),target.getNext(),target.getDown());
+	/* public TNode copyNode(TNode target){
+		
+		TNode nextCopy = null;
+		TNode belowCopy = null;
 		if (target.getNext()!=null){
-			copy.setNext(copyNode(target.getNext()));
-			return target;
+			 nextCopy = copyNode(target.getNext());
 		}
 		if (target.getDown()!=null){
-			copy.setDown(copyNode(target.getDown()));
+			belowCopy = copyNode(target.getDown());
 		}
+		TNode copy = new TNode(target.getLocation());
+		copy.setNext(nextCopy);
+		copy.setDown(belowCopy);
 		return copy;
-	}
+	} */
 
 	public ArrayList<TNode> mapTo(TNode start, int end){
 		ArrayList<TNode> map = new ArrayList<>();
@@ -195,10 +202,141 @@ public class Transit {
 	 * 
 	 * @return A reference to the train zero node of a deep copy
 	 */
-	public TNode duplicate() {
-		TNode copyZero = copyNode(trainZero);
-	    return copyZero;
+	public TNode copy(TNode target){
+		if (target!=null){
+		TNode copy = new TNode(target.getLocation());
+		return copy;
+		}
+		return null;
 	}
+
+	public TNode duplicate(){
+		TNode busZero = trainZero.getDown();
+		TNode locZero = busZero.getDown();
+		TNode cursor;
+		TNode lzCopy = copy(locZero);
+		TNode bzCopy = copy(busZero);
+		TNode tzCopy = copy(trainZero);
+		tzCopy.setDown(bzCopy);
+		bzCopy.setDown(lzCopy);
+		TNode prevCopy = lzCopy;
+		//copy locs layer
+		cursor = locZero.getNext();
+		while (cursor!=null){
+			TNode copy = copy(cursor);
+			prevCopy.setNext(copy);
+			cursor=cursor.getNext();
+			prevCopy = copy;
+		}
+		//copy bus layer
+		cursor = busZero.getNext();
+		prevCopy = bzCopy;
+		while (cursor!=null){
+			TNode copy = copy(cursor);
+			if (cursor.getDown()!=null){
+				copy.setDown(walkTo(lzCopy, cursor.getLocation()));
+			}
+			prevCopy.setNext(copy);
+			cursor=cursor.getNext();
+			prevCopy = copy;
+		}
+		//copy train layer
+		cursor = trainZero.getNext();
+		prevCopy = tzCopy;
+		while (cursor!=null){
+			TNode copy = copy(cursor);
+			if (cursor.getDown()!=null){
+				copy.setDown(walkTo(bzCopy, cursor.getLocation()));
+			}
+			prevCopy.setNext(copy);
+			cursor=cursor.getNext();
+			prevCopy = copy;
+		}
+		return tzCopy;
+	}
+	/* public TNode duplicate(){
+
+		TNode tz = trainZero;
+		TNode bz = tz.getDown();
+		TNode wz = bz.getDown();
+		TNode copy = null, below = null, prev = null;
+		TNode[] original_zeros = {tz, bz, wz};
+
+
+		TNode[] copied_zeros = {new TNode(0), new TNode(0), new TNode(0)};
+		for (int i = 0; i < original_zeros.length; i++){
+			// Start from walking layer and work right then go up a layer
+			TNode curr = original_zeros[original_zeros.length - i - 1];
+			while (curr != null){
+				copy = new TNode(curr.getLocation());
+
+				// Set down if applicable
+				if (i > 0) {
+					below = walkTo(copied_zeros[i-1], curr.getLocation());
+					copy.setDown(below);
+				}
+				
+				// Set point the previous copy to the current copy
+				if (prev != null)
+					prev.setNext(copy);
+				prev = copy;
+
+				// Move right
+				curr = curr.getNext();
+			}
+		}
+		return copied_zeros[0];
+	} */
+
+	/* public TNode duplicate() {
+		int walking_location;
+		int bus_location = 0;
+		int train_location = 0;
+		
+		TNode firstloc = new TNode(0);
+		TNode firstBus = new TNode(0,null,firstloc);
+		trainZero = new TNode(0,null,firstBus);
+
+		TNode loc_node=null, bus_node=null, train_node=null;
+		TNode prev_loc_node = firstloc, prev_bus_node = firstBus, prev_train_node = trainZero;
+		
+		for (int location_idx = 0, bus_idx = 0, train_idx = 0; location_idx  < locations.length; location_idx++){
+			walking_location = locations[location_idx];
+			if (bus_idx<busStops.length){
+			bus_location = busStops[bus_idx];
+			}
+			if (train_idx<trainStations.length){
+			train_location = trainStations[train_idx];
+			}
+
+			//Hook up location
+			loc_node = new TNode(walking_location);
+			if (prev_loc_node != null)
+				prev_loc_node.setNext(loc_node);
+			prev_loc_node = loc_node;
+			// Hook up bus
+			if ( walking_location == bus_location){
+
+				// Creates the bus node, sets loc_node as down
+				bus_node = new TNode(bus_location, null, loc_node);
+				if (prev_bus_node != null)
+					prev_bus_node.setNext(bus_node);
+				prev_bus_node = bus_node;
+				++bus_idx;
+
+
+				// Hook up train
+				if (bus_location == train_location){
+					train_node = new TNode(train_location, null, bus_node);
+					if (prev_train_node != null)
+						prev_train_node.setNext(train_node);
+					prev_train_node = train_node;
+					++train_idx;
+				}
+			}
+		}
+		System.out.println();
+	} */
 
 	/**
 	 * Modifies the given layered list to add a scooter layer in between the bus and
